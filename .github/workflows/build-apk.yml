@@ -56,16 +56,22 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Make Gradle executable
-        shell: bash
-        run: |
-          chmod +x "$PROJECT_DIR/gradlew"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
         shell: bash
         run: |
-          ./gradlew assembleDebug --stacktrace
+          set -e
+          if [ -f "gradlew" ]; then
+            echo "Found gradlew wrapper."
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace
+          else
+            echo "gradlew not found, using installed gradle..."
+            gradle assembleDebug --stacktrace
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -73,4 +79,3 @@ jobs:
           name: DomainExpand-debug-apk
           path: |
             ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/*.apk
-
